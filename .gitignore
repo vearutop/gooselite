@@ -4,3 +4,4 @@
 /bench-*.txt
 /vendor
 /bin
+sql.db

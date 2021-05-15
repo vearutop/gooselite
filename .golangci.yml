@@ -20,6 +20,19 @@ linters-settings:
 linters:
   enable-all: true
   disable:
+    - dogsled
+    - gosec
+    - errcheck
+    - gocyclo
+    - gocognit
+    - funlen
+    - gocritic
+    - goconst
+    - nestif
+    - goerr113
+    - exhaustive
+    - errorlint
+    - cyclop
     - lll
     - maligned
     - gochecknoglobals
@@ -37,6 +50,8 @@ issues:
   exclude-use-default: false
   exclude-rules:
     - linters:
+        - testpackage
+        - gosec
         - gomnd
         - goconst
         - goerr113
