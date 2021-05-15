@@ -1,4 +1,4 @@
-module github.com/bool64/go-template
+module github.com/vearutop/gooselite
 
 go 1.16
 
