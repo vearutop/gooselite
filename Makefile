@@ -1,5 +1,6 @@
 BUILD_PKG=./cmd/gooselite
 BUILD_LDFLAGS="-s -w"
+CGO_ENABLED=1
 
 #GOLANGCI_LINT_VERSION := "v1.39.0" # Optional configuration to pinpoint golangci-lint version.
 
