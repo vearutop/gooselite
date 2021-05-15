@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	flags      = flag.NewFlagSet("goose", flag.ExitOnError)
+	flags      = flag.NewFlagSet("gooselite", flag.ExitOnError)
 	dir        = flags.String("dir", ".", "directory with migration files")
 	table      = flags.String("table", "goose_db_version", "migrations table name")
 	verbose    = flags.Bool("v", false, "enable verbose mode")
@@ -113,7 +113,7 @@ func usage() {
 }
 
 var (
-	usagePrefix = `Usage: goose [OPTIONS] DRIVER DBSTRING COMMAND
+	usagePrefix = `Usage: gooselite [OPTIONS] DRIVER DBSTRING COMMAND
 
 or
 
