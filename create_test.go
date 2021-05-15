@@ -22,7 +22,7 @@ func TestSequential(t *testing.T) {
 	defer os.Remove("./bin/create-goose") // clean up
 
 	commands := []string{
-		"go build -o ./bin/create-goose ./cmd/goose",
+		"go build -o ./bin/create-goose ./cmd/gooselite",
 		fmt.Sprintf("./bin/create-goose -s -dir=%s create create_table", dir),
 		fmt.Sprintf("./bin/create-goose -s -dir=%s create add_users", dir),
 		fmt.Sprintf("./bin/create-goose -s -dir=%s create add_indices", dir),
