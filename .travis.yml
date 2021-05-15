@@ -1,8 +1,0 @@
-sudo: false
-language: go
-go:
-- 1.16
-
-script:
-- mkdir -p bin
-- go test -v ./...

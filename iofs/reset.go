@@ -5,10 +5,10 @@ import (
 	"io/fs"
 
 	"github.com/pkg/errors"
-	"github.com/pressly/goose"
+	goose "github.com/vearutop/gooselite"
 )
 
-// Reset rolls back all migrations
+// Reset rolls back all migrations.
 func Reset(db *sql.DB, fsys fs.FS, dir string) error {
 	migrations, err := CollectMigrations(fsys, dir, 0, goose.MaxVersion)
 	if err != nil {

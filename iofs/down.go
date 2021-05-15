@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"io/fs"
 
-	"github.com/pressly/goose"
+	goose "github.com/vearutop/gooselite"
 )
 
 // Down rolls back a single migration from the current version.
@@ -26,4 +26,3 @@ func DownTo(db *sql.DB, fsys fs.FS, dir string, version int64) error {
 
 	return migrations.DownTo(db, version)
 }
-

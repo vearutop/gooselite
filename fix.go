@@ -1,4 +1,4 @@
-package goose
+package gooselite
 
 import (
 	"fmt"
@@ -9,6 +9,7 @@ import (
 
 const seqVersionTemplate = "%05v"
 
+// Fix renames timestamped filenames with sequential versions.
 func Fix(dir string) error {
 	migrations, err := CollectMigrations(dir, minVersion, maxVersion)
 	if err != nil {
@@ -16,15 +17,10 @@ func Fix(dir string) error {
 	}
 
 	// split into timestamped and versioned migrations
-	tsMigrations, err := migrations.timestamped()
-	if err != nil {
-		return err
-	}
+	tsMigrations := migrations.timestamped()
 
-	vMigrations, err := migrations.versioned()
-	if err != nil {
-		return err
-	}
+	vMigrations := migrations.versioned()
+
 	// Initial version.
 	version := int64(1)
 	if last, err := vMigrations.Last(); err == nil {

@@ -5,7 +5,7 @@ import (
 	"io/fs"
 
 	"github.com/pkg/errors"
-	"github.com/pressly/goose"
+	goose "github.com/vearutop/gooselite"
 )
 
 // Status prints the status of all migrations.
@@ -18,4 +18,3 @@ func Status(db *sql.DB, fsys fs.FS, dir string) error {
 
 	return migrations.Status(db)
 }
-

@@ -1,4 +1,4 @@
-package goose
+package gooselite
 
 import (
 	"os"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSemicolons(t *testing.T) {
@@ -60,6 +61,7 @@ func TestSplitStatements(t *testing.T) {
 		if err != nil {
 			t.Error(errors.Wrapf(err, "tt[%v] unexpected error", i))
 		}
+
 		if len(stmts) != test.up {
 			t.Errorf("tt[%v] incorrect number of up stmts. got %v (%+v), want %v", i, len(stmts), stmts, test.up)
 		}
@@ -69,6 +71,7 @@ func TestSplitStatements(t *testing.T) {
 		if err != nil {
 			t.Error(errors.Wrapf(err, "tt[%v] unexpected error", i))
 		}
+
 		if len(stmts) != test.down {
 			t.Errorf("tt[%v] incorrect number of down stmts. got %v (%+v), want %v", i, len(stmts), stmts, test.down)
 		}
@@ -94,14 +97,17 @@ func TestUseTransactions(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
+
 		_, useTx, err := parseSQLMigration(f, true)
 		if err != nil {
 			t.Error(err)
 		}
+
 		if useTx != test.useTransactions {
 			t.Errorf("Failed transaction check. got %v, want %v", useTx, test.useTransactions)
 		}
-		f.Close()
+
+		assert.NoError(t, f.Close())
 	}
 }
 

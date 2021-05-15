@@ -1,7 +1,6 @@
-package goose
+package gooselite
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -16,28 +15,24 @@ type tmplVars struct {
 	CamelName string
 }
 
-var (
-	sequential = false
-)
+var sequential = false
 
-// SetSequential set whether to use sequential versioning instead of timestamp based versioning
+// SetSequential set whether to use sequential versioning instead of timestamp based versioning.
 func SetSequential(s bool) {
 	sequential = s
 }
 
-// Create writes a new blank migration file.
-func CreateWithTemplate(db *sql.DB, dir string, tmpl *template.Template, name, migrationType string) error {
+// CreateWithTemplate writes a new blank migration file.
+func CreateWithTemplate(dir string, tmpl *template.Template, name, migrationType string) (err error) {
 	var version string
+
 	if sequential {
 		migrations, err := CollectMigrations(dir, minVersion, maxVersion)
 		if err != nil {
 			return err
 		}
 
-		vMigrations, err := migrations.versioned()
-		if err != nil {
-			return err
-		}
+		vMigrations := migrations.versioned()
 
 		if last, err := vMigrations.Last(); err == nil {
 			version = fmt.Sprintf(seqVersionTemplate, last.Version+1)
@@ -67,7 +62,13 @@ func CreateWithTemplate(db *sql.DB, dir string, tmpl *template.Template, name, m
 	if err != nil {
 		return errors.Wrap(err, "failed to create migration file")
 	}
-	defer f.Close()
+
+	defer func() {
+		errCl := f.Close()
+		if errCl != nil && err == nil {
+			err = errCl
+		}
+	}()
 
 	vars := tmplVars{
 		Version:   version,
@@ -78,12 +79,13 @@ func CreateWithTemplate(db *sql.DB, dir string, tmpl *template.Template, name, m
 	}
 
 	log.Printf("Created new file: %s\n", f.Name())
+
 	return nil
 }
 
 // Create writes a new blank migration file.
-func Create(db *sql.DB, dir, name, migrationType string) error {
-	return CreateWithTemplate(db, dir, nil, name, migrationType)
+func Create(dir, name, migrationType string) error {
+	return CreateWithTemplate(dir, nil, name, migrationType)
 }
 
 var sqlMigrationTemplate = template.Must(template.New("goose.sql-migration").Parse(`-- +goose Up
@@ -101,7 +103,7 @@ var goSQLMigrationTemplate = template.Must(template.New("goose.go-migration").Pa
 
 import (
 	"database/sql"
-	"github.com/pressly/goose"
+	"github.com/vearutop/gooselite"
 )
 
 func init() {

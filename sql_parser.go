@@ -1,4 +1,4 @@
-package goose
+package gooselite
 
 import (
 	"bufio"
@@ -28,9 +28,10 @@ type stateMachine parserState
 func (s *stateMachine) Get() parserState {
 	return parserState(*s)
 }
-func (s *stateMachine) Set(new parserState) {
-	verboseInfo("StateMachine: %v => %v", *s, new)
-	*s = stateMachine(new)
+
+func (s *stateMachine) Set(state parserState) {
+	verboseInfo("StateMachine: %v => %v", *s, state)
+	*s = stateMachine(state)
 }
 
 const scanBufSize = 4 * 1024 * 1024
@@ -39,7 +40,9 @@ var matchEmptyLines = regexp.MustCompile(`^\s*$`)
 
 var bufferPool = sync.Pool{
 	New: func() interface{} {
-		return make([]byte, scanBufSize)
+		b := make([]byte, scanBufSize)
+
+		return &b
 	},
 }
 
@@ -55,11 +58,13 @@ var bufferPool = sync.Pool{
 // tell us to ignore semicolons.
 func parseSQLMigration(r io.Reader, direction bool) (stmts []string, useTx bool, err error) {
 	var buf bytes.Buffer
-	scanBuf := bufferPool.Get().([]byte)
+
+	scanBuf := bufferPool.Get().(*[]byte)
+
 	defer bufferPool.Put(scanBuf)
 
 	scanner := bufio.NewScanner(r)
-	scanner.Buffer(scanBuf, scanBufSize)
+	scanner.Buffer(*scanBuf, scanBufSize)
 
 	stateMachine := stateMachine(start)
 	useTx = true
@@ -81,6 +86,7 @@ func parseSQLMigration(r io.Reader, direction bool) (stmts []string, useTx bool,
 				default:
 					return nil, false, errors.Errorf("duplicate '-- +goose Up' annotations; stateMachine=%v, see https://github.com/pressly/goose#sql-migrations", stateMachine)
 				}
+
 				continue
 
 			case "+goose Down":
@@ -90,6 +96,7 @@ func parseSQLMigration(r io.Reader, direction bool) (stmts []string, useTx bool,
 				default:
 					return nil, false, errors.Errorf("must start with '-- +goose Up' annotation, stateMachine=%v, see https://github.com/pressly/goose#sql-migrations", stateMachine)
 				}
+
 				continue
 
 			case "+goose StatementBegin":
@@ -101,6 +108,7 @@ func parseSQLMigration(r io.Reader, direction bool) (stmts []string, useTx bool,
 				default:
 					return nil, false, errors.Errorf("'-- +goose StatementBegin' must be defined after '-- +goose Up' or '-- +goose Down' annotation, stateMachine=%v, see https://github.com/pressly/goose#sql-migrations", stateMachine)
 				}
+
 				continue
 
 			case "+goose StatementEnd":
@@ -115,11 +123,13 @@ func parseSQLMigration(r io.Reader, direction bool) (stmts []string, useTx bool,
 
 			case "+goose NO TRANSACTION":
 				useTx = false
+
 				continue
 
 			default:
 				// Ignore comments.
 				verboseInfo("StateMachine: ignore comment")
+
 				continue
 			}
 		}
@@ -127,6 +137,7 @@ func parseSQLMigration(r io.Reader, direction bool) (stmts []string, useTx bool,
 		// Ignore empty lines.
 		if matchEmptyLines.MatchString(line) {
 			verboseInfo("StateMachine: ignore empty line")
+
 			continue
 		}
 
@@ -145,12 +156,14 @@ func parseSQLMigration(r io.Reader, direction bool) (stmts []string, useTx bool,
 			if !direction /*down*/ {
 				buf.Reset()
 				verboseInfo("StateMachine: ignore down")
+
 				continue
 			}
 		case gooseDown, gooseStatementBeginDown, gooseStatementEndDown:
 			if direction /*up*/ {
 				buf.Reset()
 				verboseInfo("StateMachine: ignore up")
+
 				continue
 			}
 		default:
@@ -182,6 +195,7 @@ func parseSQLMigration(r io.Reader, direction bool) (stmts []string, useTx bool,
 			stateMachine.Set(gooseDown)
 		}
 	}
+
 	if err := scanner.Err(); err != nil {
 		return nil, false, errors.Wrap(err, "failed to scan migration")
 	}
@@ -204,12 +218,12 @@ func parseSQLMigration(r io.Reader, direction bool) (stmts []string, useTx bool,
 // Checks the line to see if the line has a statement-ending semicolon
 // or if the line contains a double-dash comment.
 func endsWithSemicolon(line string) bool {
-	scanBuf := bufferPool.Get().([]byte)
+	scanBuf := bufferPool.Get().(*[]byte)
 	defer bufferPool.Put(scanBuf)
 
 	prev := ""
 	scanner := bufio.NewScanner(strings.NewReader(line))
-	scanner.Buffer(scanBuf, scanBufSize)
+	scanner.Buffer(*scanBuf, scanBufSize)
 	scanner.Split(bufio.ScanWords)
 
 	for scanner.Scan() {
@@ -217,6 +231,7 @@ func endsWithSemicolon(line string) bool {
 		if strings.HasPrefix(word, "--") {
 			break
 		}
+
 		prev = word
 	}
 

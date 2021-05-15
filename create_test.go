@@ -1,4 +1,4 @@
-package goose
+package gooselite
 
 import (
 	"fmt"
@@ -31,9 +31,12 @@ func TestSequential(t *testing.T) {
 
 	for _, cmd := range commands {
 		args := strings.Split(cmd, " ")
+
 		time.Sleep(1 * time.Second)
+
 		cmd := exec.Command(args[0], args[1:]...)
 		cmd.Env = os.Environ()
+
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("%s:\n%v\n\n%s", err, cmd, out)

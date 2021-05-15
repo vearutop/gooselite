@@ -1,4 +1,4 @@
-package goose
+package gooselite
 
 import (
 	"database/sql"
@@ -6,7 +6,7 @@ import (
 )
 
 // SQLDialect abstracts the details of specific SQL dialects
-// for goose's few SQL specific statements
+// for goose's few SQL specific statements.
 type SQLDialect interface {
 	createVersionTableSQL() string // sql string to create the db version table
 	insertVersionSQL() string      // sql string to insert the initial version table row
@@ -17,12 +17,12 @@ type SQLDialect interface {
 
 var dialect SQLDialect = &PostgresDialect{}
 
-// GetDialect gets the SQLDialect
+// GetDialect gets the SQLDialect.
 func GetDialect() SQLDialect {
 	return dialect
 }
 
-// SetDialect sets the SQLDialect
+// SetDialect sets the SQLDialect.
 func SetDialect(d string) error {
 	switch d {
 	case "postgres":
@@ -32,7 +32,7 @@ func SetDialect(d string) error {
 	case "sqlite3":
 		dialect = &Sqlite3Dialect{}
 	case "mssql":
-		dialect = &SqlServerDialect{}
+		dialect = &SQLServerDialect{}
 	case "redshift":
 		dialect = &RedshiftDialect{}
 	case "tidb":
@@ -53,7 +53,7 @@ func SetDialect(d string) error {
 // PostgresDialect struct.
 type PostgresDialect struct{}
 
-func (pg PostgresDialect) createVersionTableSQL() string {
+func (d PostgresDialect) createVersionTableSQL() string {
 	return fmt.Sprintf(`CREATE TABLE %s (
             	id serial NOT NULL,
                 version_id bigint NOT NULL,
@@ -63,11 +63,11 @@ func (pg PostgresDialect) createVersionTableSQL() string {
             );`, TableName())
 }
 
-func (pg PostgresDialect) insertVersionSQL() string {
+func (d PostgresDialect) insertVersionSQL() string {
 	return fmt.Sprintf("INSERT INTO %s (version_id, is_applied) VALUES ($1, $2);", TableName())
 }
 
-func (pg PostgresDialect) dbVersionQuery(db *sql.DB) (*sql.Rows, error) {
+func (d PostgresDialect) dbVersionQuery(db *sql.DB) (*sql.Rows, error) {
 	rows, err := db.Query(fmt.Sprintf("SELECT version_id, is_applied from %s ORDER BY id DESC", TableName()))
 	if err != nil {
 		return nil, err
@@ -76,11 +76,11 @@ func (pg PostgresDialect) dbVersionQuery(db *sql.DB) (*sql.Rows, error) {
 	return rows, err
 }
 
-func (m PostgresDialect) migrationSQL() string {
+func (d PostgresDialect) migrationSQL() string {
 	return fmt.Sprintf("SELECT tstamp, is_applied FROM %s WHERE version_id=$1 ORDER BY tstamp DESC LIMIT 1", TableName())
 }
 
-func (pg PostgresDialect) deleteVersionSQL() string {
+func (d PostgresDialect) deleteVersionSQL() string {
 	return fmt.Sprintf("DELETE FROM %s WHERE version_id=$1;", TableName())
 }
 
@@ -126,10 +126,10 @@ func (m MySQLDialect) deleteVersionSQL() string {
 // MSSQL
 ////////////////////////////
 
-// SqlServerDialect struct.
-type SqlServerDialect struct{}
+// SQLServerDialect struct.
+type SQLServerDialect struct{}
 
-func (m SqlServerDialect) createVersionTableSQL() string {
+func (m SQLServerDialect) createVersionTableSQL() string {
 	return fmt.Sprintf(`CREATE TABLE %s (
                 id INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
                 version_id BIGINT NOT NULL,
@@ -138,11 +138,11 @@ func (m SqlServerDialect) createVersionTableSQL() string {
             );`, TableName())
 }
 
-func (m SqlServerDialect) insertVersionSQL() string {
+func (m SQLServerDialect) insertVersionSQL() string {
 	return fmt.Sprintf("INSERT INTO %s (version_id, is_applied) VALUES (@p1, @p2);", TableName())
 }
 
-func (m SqlServerDialect) dbVersionQuery(db *sql.DB) (*sql.Rows, error) {
+func (m SQLServerDialect) dbVersionQuery(db *sql.DB) (*sql.Rows, error) {
 	rows, err := db.Query(fmt.Sprintf("SELECT version_id, is_applied FROM %s ORDER BY id DESC", TableName()))
 	if err != nil {
 		return nil, err
@@ -151,7 +151,7 @@ func (m SqlServerDialect) dbVersionQuery(db *sql.DB) (*sql.Rows, error) {
 	return rows, err
 }
 
-func (m SqlServerDialect) migrationSQL() string {
+func (m SQLServerDialect) migrationSQL() string {
 	const tpl = `
 WITH Migrations AS
 (
@@ -165,10 +165,11 @@ FROM Migrations
 WHERE RowNumber BETWEEN 1 AND 2
 ORDER BY tstamp DESC
 `
+
 	return fmt.Sprintf(tpl, TableName())
 }
 
-func (m SqlServerDialect) deleteVersionSQL() string {
+func (m SQLServerDialect) deleteVersionSQL() string {
 	return fmt.Sprintf("DELETE FROM %s WHERE version_id=@p1;", TableName())
 }
 
@@ -216,7 +217,7 @@ func (m Sqlite3Dialect) deleteVersionSQL() string {
 // RedshiftDialect struct.
 type RedshiftDialect struct{}
 
-func (rs RedshiftDialect) createVersionTableSQL() string {
+func (d RedshiftDialect) createVersionTableSQL() string {
 	return fmt.Sprintf(`CREATE TABLE %s (
             	id integer NOT NULL identity(1, 1),
                 version_id bigint NOT NULL,
@@ -226,11 +227,11 @@ func (rs RedshiftDialect) createVersionTableSQL() string {
             );`, TableName())
 }
 
-func (rs RedshiftDialect) insertVersionSQL() string {
+func (d RedshiftDialect) insertVersionSQL() string {
 	return fmt.Sprintf("INSERT INTO %s (version_id, is_applied) VALUES ($1, $2);", TableName())
 }
 
-func (rs RedshiftDialect) dbVersionQuery(db *sql.DB) (*sql.Rows, error) {
+func (d RedshiftDialect) dbVersionQuery(db *sql.DB) (*sql.Rows, error) {
 	rows, err := db.Query(fmt.Sprintf("SELECT version_id, is_applied from %s ORDER BY id DESC", TableName()))
 	if err != nil {
 		return nil, err
@@ -239,11 +240,11 @@ func (rs RedshiftDialect) dbVersionQuery(db *sql.DB) (*sql.Rows, error) {
 	return rows, err
 }
 
-func (m RedshiftDialect) migrationSQL() string {
+func (d RedshiftDialect) migrationSQL() string {
 	return fmt.Sprintf("SELECT tstamp, is_applied FROM %s WHERE version_id=$1 ORDER BY tstamp DESC LIMIT 1", TableName())
 }
 
-func (rs RedshiftDialect) deleteVersionSQL() string {
+func (d RedshiftDialect) deleteVersionSQL() string {
 	return fmt.Sprintf("DELETE FROM %s WHERE version_id=$1;", TableName())
 }
 
@@ -308,6 +309,7 @@ func (m ClickHouseDialect) dbVersionQuery(db *sql.DB) (*sql.Rows, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return rows, err
 }
 

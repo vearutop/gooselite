@@ -1,4 +1,4 @@
-package goose
+package gooselite
 
 import (
 	"database/sql"
@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Reset rolls back all migrations
+// Reset rolls back all migrations.
 func (ms Migrations) Reset(db *sql.DB) error {
 	msCopy := make(Migrations, len(ms))
 	copy(msCopy, ms)
@@ -23,6 +23,7 @@ func (ms Migrations) Reset(db *sql.DB) error {
 		if !statuses[migration.Version] {
 			continue
 		}
+
 		if err = migration.Down(db); err != nil {
 			return errors.Wrap(err, "failed to db-down")
 		}
@@ -31,7 +32,7 @@ func (ms Migrations) Reset(db *sql.DB) error {
 	return nil
 }
 
-// Reset rolls back all migrations
+// Reset rolls back all migrations.
 func Reset(db *sql.DB, dir string) error {
 	migrations, err := CollectMigrations(dir, minVersion, maxVersion)
 	if err != nil {
@@ -41,17 +42,23 @@ func Reset(db *sql.DB, dir string) error {
 	return migrations.Reset(db)
 }
 
-func dbMigrationsStatus(db *sql.DB) (map[int64]bool, error) {
+func dbMigrationsStatus(db *sql.DB) (result map[int64]bool, err error) {
 	rows, err := GetDialect().dbVersionQuery(db)
 	if err != nil {
-		return map[int64]bool{}, nil
+		return map[int64]bool{}, err
 	}
-	defer rows.Close()
+
+	defer func() {
+		errClose := rows.Close()
+		if err == nil && errClose != nil {
+			err = errClose
+		}
+	}()
 
 	// The most recent record for each migration specifies
 	// whether it has been applied or rolled back.
 
-	result := make(map[int64]bool)
+	result = make(map[int64]bool)
 
 	for rows.Next() {
 		var row MigrationRecord
@@ -64,6 +71,10 @@ func dbMigrationsStatus(db *sql.DB) (map[int64]bool, error) {
 		}
 
 		result[row.VersionID] = row.IsApplied
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return result, nil

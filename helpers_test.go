@@ -1,4 +1,4 @@
-package goose
+package gooselite
 
 import (
 	"testing"
@@ -20,6 +20,7 @@ func TestCamelSnake(t *testing.T) {
 		if got := camelCase(test.in); got != test.camel {
 			t.Errorf("unexpected CamelCase for input(%q), got %q, want %q", test.in, got, test.camel)
 		}
+
 		if got := snakeCase(test.in); got != test.snake {
 			t.Errorf("unexpected snake_case for input(%q), got %q, want %q", test.in, got, test.snake)
 		}

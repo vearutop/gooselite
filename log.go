@@ -1,4 +1,4 @@
-package goose
+package gooselite
 
 import (
 	std "log"
@@ -6,7 +6,7 @@ import (
 
 var log Logger = &stdLogger{}
 
-// Logger is standard logger interface
+// Logger is standard logger interface.
 type Logger interface {
 	Fatal(v ...interface{})
 	Fatalf(format string, v ...interface{})
@@ -15,7 +15,7 @@ type Logger interface {
 	Printf(format string, v ...interface{})
 }
 
-// SetLogger sets the logger for package output
+// SetLogger sets the logger for package output.
 func SetLogger(l Logger) {
 	log = l
 }

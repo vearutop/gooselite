@@ -1,4 +1,4 @@
-package goose
+package gooselite
 
 import (
 	"database/sql"
@@ -26,13 +26,17 @@ var (
 // Migrations slice.
 type Migrations []*Migration
 
-// helpers so we can use pkg sort
+var _ sort.Interface = Migrations(nil)
+
+// helpers so we can use pkg sort.
+
 func (ms Migrations) Len() int      { return len(ms) }
 func (ms Migrations) Swap(i, j int) { ms[i], ms[j] = ms[j], ms[i] }
 func (ms Migrations) Less(i, j int) bool {
 	if ms[i].Version == ms[j].Version {
 		panic(fmt.Sprintf("goose: duplicate version %v detected:\n%v\n%v", ms[i].Version, ms[i].Source, ms[j].Source))
 	}
+
 	return ms[i].Version < ms[j].Version
 }
 
@@ -79,12 +83,12 @@ func (ms Migrations) Last() (*Migration, error) {
 }
 
 // Versioned gets versioned migrations.
-func (ms Migrations) versioned() (Migrations, error) {
+func (ms Migrations) versioned() Migrations {
 	var migrations Migrations
 
 	// assume that the user will never have more than 19700101000000 migrations
 	for _, m := range ms {
-		// parse version as timestmap
+		// parse version as timestamp
 		versionTime, err := time.Parse(timestampFormat, fmt.Sprintf("%d", m.Version))
 
 		if versionTime.Before(time.Unix(0, 0)) || err != nil {
@@ -92,16 +96,16 @@ func (ms Migrations) versioned() (Migrations, error) {
 		}
 	}
 
-	return migrations, nil
+	return migrations
 }
 
 // Timestamped gets the timestamped migrations.
-func (ms Migrations) timestamped() (Migrations, error) {
+func (ms Migrations) timestamped() Migrations {
 	var migrations Migrations
 
 	// assume that the user will never have more than 19700101000000 migrations
 	for _, m := range ms {
-		// parse version as timestmap
+		// parse version as timestamp
 		versionTime, err := time.Parse(timestampFormat, fmt.Sprintf("%d", m.Version))
 		if err != nil {
 			// probably not a timestamp
@@ -112,7 +116,8 @@ func (ms Migrations) timestamped() (Migrations, error) {
 			migrations = append(migrations, m)
 		}
 	}
-	return migrations, nil
+
+	return migrations
 }
 
 func (ms Migrations) String() string {
@@ -120,6 +125,7 @@ func (ms Migrations) String() string {
 	for _, m := range ms {
 		str += fmt.Sprintln(m)
 	}
+
 	return str
 }
 
@@ -155,11 +161,13 @@ func CollectMigrations(dirpath string, current, target int64) (Migrations, error
 	if err != nil {
 		return nil, err
 	}
+
 	for _, file := range sqlMigrationFiles {
 		v, err := NumericComponent(file)
 		if err != nil {
 			return nil, err
 		}
+
 		if versionFilter(v, current, target) {
 			migration := &Migration{Version: v, Next: -1, Previous: -1, Source: file}
 			migrations = append(migrations, migration)
@@ -172,6 +180,7 @@ func CollectMigrations(dirpath string, current, target int64) (Migrations, error
 		if err != nil {
 			return nil, err
 		}
+
 		if versionFilter(v, current, target) {
 			migrations = append(migrations, migration)
 		}
@@ -182,6 +191,7 @@ func CollectMigrations(dirpath string, current, target int64) (Migrations, error
 	if err != nil {
 		return nil, err
 	}
+
 	for _, file := range goMigrationFiles {
 		v, err := NumericComponent(file)
 		if err != nil {
@@ -215,6 +225,7 @@ func sortAndConnectMigrations(migrations Migrations) Migrations {
 			prev = migrations[i-1].Version
 			migrations[i-1].Next = m.Version
 		}
+
 		migrations[i].Previous = prev
 	}
 
@@ -222,7 +233,6 @@ func sortAndConnectMigrations(migrations Migrations) Migrations {
 }
 
 func versionFilter(v, current, target int64) bool {
-
 	if target > current {
 		return v > current && v <= target
 	}
@@ -257,9 +267,11 @@ func EnsureDBVersion(db *sql.DB) (int64, error) {
 
 		// have we already marked this version to be skipped?
 		skip := false
+
 		for _, v := range toSkip {
 			if v == row.VersionID {
 				skip = true
+
 				break
 			}
 		}
@@ -276,6 +288,7 @@ func EnsureDBVersion(db *sql.DB) (int64, error) {
 		// latest version of migration has not been applied.
 		toSkip = append(toSkip, row.VersionID)
 	}
+
 	if err := rows.Err(); err != nil {
 		return 0, errors.Wrap(err, "failed to get next row")
 	}
@@ -284,7 +297,7 @@ func EnsureDBVersion(db *sql.DB) (int64, error) {
 }
 
 // Create the db version table
-// and insert the initial 0 value into it
+// and insert the initial 0 value into it.
 func createVersionTable(db *sql.DB) error {
 	txn, err := db.Begin()
 	if err != nil {
@@ -295,13 +308,16 @@ func createVersionTable(db *sql.DB) error {
 
 	if _, err := txn.Exec(d.createVersionTableSQL()); err != nil {
 		txn.Rollback()
+
 		return err
 	}
 
 	version := 0
 	applied := true
+
 	if _, err := txn.Exec(d.insertVersionSQL(), version, applied); err != nil {
 		txn.Rollback()
+
 		return err
 	}
 

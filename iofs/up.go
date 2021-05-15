@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"io/fs"
 
-	"github.com/pressly/goose"
+	goose "github.com/vearutop/gooselite"
 )
 
 // UpTo migrates up to a specific version.
@@ -31,4 +31,3 @@ func UpByOne(db *sql.DB, fsys fs.FS, dir string) error {
 
 	return migrations.UpByOne(db)
 }
-

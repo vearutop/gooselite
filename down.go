@@ -1,4 +1,4 @@
-package goose
+package gooselite
 
 import (
 	"database/sql"
@@ -29,8 +29,15 @@ func (ms Migrations) DownTo(db *sql.DB, targetVersion int64) error {
 		}
 
 		current, err := ms.Current(currentVersion)
-		if err != nil || currentVersion <= targetVersion {
+		if err != nil {
+			log.Printf("goose: %s\n", err.Error())
+
+			return nil
+		}
+
+		if currentVersion <= targetVersion {
 			log.Printf("goose: no migrations to run. current version: %d\n", currentVersion)
+
 			return nil
 		}
 

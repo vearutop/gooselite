@@ -1,4 +1,4 @@
-package goose
+package gooselite
 
 import (
 	"testing"
@@ -10,10 +10,10 @@ func TestMigrationSort(t *testing.T) {
 	ms := Migrations{}
 
 	// insert in any order
-	ms = append(ms, newMigration(20120000, "test"))
-	ms = append(ms, newMigration(20128000, "test"))
-	ms = append(ms, newMigration(20129000, "test"))
-	ms = append(ms, newMigration(20127000, "test"))
+	ms = append(ms, newMigration(20120000))
+	ms = append(ms, newMigration(20128000))
+	ms = append(ms, newMigration(20129000))
+	ms = append(ms, newMigration(20127000))
 
 	ms = sortAndConnectMigrations(ms)
 
@@ -22,11 +22,13 @@ func TestMigrationSort(t *testing.T) {
 	validateMigrationSort(t, ms, sorted)
 }
 
-func newMigration(v int64, src string) *Migration {
-	return &Migration{Version: v, Previous: -1, Next: -1, Source: src}
+func newMigration(v int64) *Migration {
+	return &Migration{Version: v, Previous: -1, Next: -1, Source: "test"}
 }
 
 func validateMigrationSort(t *testing.T, ms Migrations, sorted []int64) {
+	t.Helper()
+
 	for i, m := range ms {
 		if sorted[i] != m.Version {
 			t.Error("incorrect sorted version")

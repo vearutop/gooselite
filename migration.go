@@ -1,4 +1,4 @@
-package goose
+package gooselite
 
 import (
 	"database/sql"
@@ -38,18 +38,12 @@ func (m *Migration) String() string {
 
 // Up runs an up migration.
 func (m *Migration) Up(db *sql.DB) error {
-	if err := m.run(db, true); err != nil {
-		return err
-	}
-	return nil
+	return m.run(db, true)
 }
 
 // Down runs a down migration.
 func (m *Migration) Down(db *sql.DB) error {
-	if err := m.run(db, false); err != nil {
-		return err
-	}
-	return nil
+	return m.run(db, false)
 }
 
 func (m *Migration) run(db *sql.DB, direction bool) error {
@@ -87,6 +81,7 @@ func (m *Migration) run(db *sql.DB, direction bool) error {
 		if !m.Registered {
 			return errors.Errorf("ERROR %v: failed to run Go migration: Go functions must be registered and built into a custom binary (see https://github.com/pressly/goose/tree/master/examples/go-migrations)", m.Source)
 		}
+
 		tx, err := db.Begin()
 		if err != nil {
 			return errors.Wrap(err, "ERROR failed to begin transaction")
@@ -101,6 +96,7 @@ func (m *Migration) run(db *sql.DB, direction bool) error {
 			// Run Go migration function.
 			if err := fn(tx); err != nil {
 				tx.Rollback()
+
 				return errors.Wrapf(err, "ERROR %v: failed to run Go migration function %T", filepath.Base(m.Source), fn)
 			}
 		}
@@ -108,11 +104,13 @@ func (m *Migration) run(db *sql.DB, direction bool) error {
 		if direction {
 			if _, err := tx.Exec(GetDialect().insertVersionSQL(), m.Version, direction); err != nil {
 				tx.Rollback()
+
 				return errors.Wrap(err, "ERROR failed to execute transaction")
 			}
 		} else {
 			if _, err := tx.Exec(GetDialect().deleteVersionSQL(), m.Version); err != nil {
 				tx.Rollback()
+
 				return errors.Wrap(err, "ERROR failed to execute transaction")
 			}
 		}
@@ -135,7 +133,7 @@ func (m *Migration) run(db *sql.DB, direction bool) error {
 
 // NumericComponent looks for migration scripts with names in the form:
 // XXX_descriptivename.ext where XXX specifies the version number
-// and ext specifies the type of migration
+// and ext specifies the type of migration.
 func NumericComponent(name string) (int64, error) {
 	base := filepath.Base(name)
 

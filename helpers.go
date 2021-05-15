@@ -1,4 +1,4 @@
-package goose
+package gooselite
 
 import (
 	"bytes"
@@ -26,6 +26,7 @@ func (s camelSnakeStateMachine) next(r rune) camelSnakeStateMachine {
 		if isAlphaNum(r) {
 			return alphaNum
 		}
+
 		return delimiter
 	case alphaNum:
 		if !isAlphaNum(r) {
@@ -35,8 +36,10 @@ func (s camelSnakeStateMachine) next(r rune) camelSnakeStateMachine {
 		if isAlphaNum(r) {
 			return firstAlphaNum
 		}
+
 		return idle
 	}
+
 	return s
 }
 
@@ -44,10 +47,12 @@ func camelCase(str string) string {
 	var b strings.Builder
 
 	stateMachine := idle
+
 	for i := 0; i < len(str); {
 		r, size := utf8.DecodeRuneInString(str[i:])
 		i += size
 		stateMachine = stateMachine.next(r)
+
 		switch stateMachine {
 		case firstAlphaNum:
 			b.WriteRune(unicode.ToUpper(r))
@@ -55,6 +60,7 @@ func camelCase(str string) string {
 			b.WriteRune(unicode.ToLower(r))
 		}
 	}
+
 	return b.String()
 }
 
@@ -62,10 +68,12 @@ func snakeCase(str string) string {
 	var b bytes.Buffer
 
 	stateMachine := idle
+
 	for i := 0; i < len(str); {
 		r, size := utf8.DecodeRuneInString(str[i:])
 		i += size
 		stateMachine = stateMachine.next(r)
+
 		switch stateMachine {
 		case firstAlphaNum, alphaNum:
 			b.WriteRune(unicode.ToLower(r))
@@ -73,9 +81,11 @@ func snakeCase(str string) string {
 			b.WriteByte('_')
 		}
 	}
+
 	if stateMachine == idle {
 		return string(bytes.TrimSuffix(b.Bytes(), []byte{'_'}))
 	}
+
 	return b.String()
 }
 

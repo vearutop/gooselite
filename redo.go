@@ -1,4 +1,4 @@
-package goose
+package gooselite
 
 import (
 	"database/sql"
@@ -20,11 +20,7 @@ func (ms Migrations) Redo(db *sql.DB) error {
 		return err
 	}
 
-	if err := current.Up(db); err != nil {
-		return err
-	}
-
-	return nil
+	return current.Up(db)
 }
 
 // Redo rolls back the most recently applied migration, then runs it again.

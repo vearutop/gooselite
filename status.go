@@ -1,4 +1,4 @@
-package goose
+package gooselite
 
 import (
 	"database/sql"
@@ -17,6 +17,7 @@ func (ms Migrations) Status(db *sql.DB) error {
 
 	log.Println("    Applied At                  Migration")
 	log.Println("    =======================================")
+
 	for _, migration := range ms {
 		if err := printMigrationStatus(db, migration.Version, filepath.Base(migration.Source)); err != nil {
 			return errors.Wrap(err, "failed to print status")
@@ -55,5 +56,6 @@ func printMigrationStatus(db *sql.DB, version int64, script string) error {
 	}
 
 	log.Printf("    %-24s -- %v\n", appliedAt, script)
+
 	return nil
 }

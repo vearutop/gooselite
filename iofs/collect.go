@@ -7,7 +7,7 @@ import (
 	"os"
 	"sort"
 
-	"github.com/pressly/goose"
+	goose "github.com/vearutop/gooselite"
 )
 
 // CollectMigrations returns all the valid looking migration scripts in the
@@ -20,15 +20,17 @@ func CollectMigrations(fsys fs.FS, dirpath string, current, target int64) (goose
 	var migrations goose.Migrations
 
 	// SQL migration files.
-	sqlMigrationFiles, err := fs.Glob(fsys, dirpath + "/*.sql")
+	sqlMigrationFiles, err := fs.Glob(fsys, dirpath+"/*.sql")
 	if err != nil {
 		return nil, err
 	}
+
 	for _, file := range sqlMigrationFiles {
 		v, err := goose.NumericComponent(file)
 		if err != nil {
 			return nil, err
 		}
+
 		if versionFilter(v, current, target) {
 			f, err := fsys.Open(file)
 			if err != nil {
@@ -52,10 +54,12 @@ func sortAndConnectMigrations(migrations goose.Migrations) goose.Migrations {
 	// populate next and previous for each migration
 	for i, m := range migrations {
 		prev := int64(-1)
+
 		if i > 0 {
 			prev = migrations[i-1].Version
 			migrations[i-1].Next = m.Version
 		}
+
 		migrations[i].Previous = prev
 	}
 

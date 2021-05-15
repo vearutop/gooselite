@@ -1,4 +1,4 @@
-package goose
+package gooselite
 
 import (
 	"database/sql"
@@ -16,20 +16,18 @@ func (ms Migrations) UpByOne(db *sql.DB) error {
 		if err == ErrNoNextVersion {
 			log.Printf("goose: no migrations to run. current version: %d\n", currentVersion)
 		}
+
 		return err
 	}
 
-	if err = next.Up(db); err != nil {
-		return err
-	}
-
-	return nil
+	return next.Up(db)
 }
 
 // Up applies all available migrations.
 func (ms Migrations) Up(db *sql.DB) error {
 	for {
 		err := ms.UpByOne(db)
+
 		switch {
 		case err == nil:
 		case err == ErrNoNextVersion:
